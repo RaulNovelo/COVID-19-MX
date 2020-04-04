@@ -10,7 +10,7 @@ from celery.decorators import periodic_task
 # project imports
 from .models import *
 from project.scrapy_api import scrapyd
-from .scripts.fetch_data import run
+from .fetch_data import run, csv_to_db
 
 # ===================================================
 # Tasks
@@ -22,6 +22,6 @@ def update_info():
     This is a real world task.
     """
     print("Updating data...")
-    run()
+    csv_to_db()
         
 

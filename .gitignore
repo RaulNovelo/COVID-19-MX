@@ -95,3 +95,4 @@ settings_local.py
 static
 celerybeat*
 db.sqlite3
+*.csv

@@ -88,6 +88,7 @@ local_settings.py
 ### Local ###
 venv
 .env
+.env.dev
 .vscode
 .env.production
 settings_local.py

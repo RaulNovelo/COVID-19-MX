@@ -1,60 +1,76 @@
-var map;
-var casesByState = {};
-var casesByAge ={};
+var map
+var casesByState = {}
+var casesByAge = {}
+var casesByDate = {}
 
 // Remove extra params
-var url = window.location.href;
-var to = url.lastIndexOf('/');
-to = to == -1 ? url.length : to + 1;
-url = url.substring(0, to);
+var url = window.location.href
+var to = url.lastIndexOf('/')
+to = to == -1 ? url.length : to + 1
+url = url.substring(0, to)
 
 /**
  * Get data from backend
  */
 fetch(url + 'api')
-  .then(function(response) {
-    return response.json();
+  .then(function (response) {
+    return response.json()
   })
-  .then(function(json) {
-    loadDonutChart([json.total_confirmed, json.total_suspected, json.total_healed]);
+  .then(function (json) {
+    loadDonutChart([
+      json.total_confirmed,
+      json.total_suspected,
+      json.total_healed
+    ])
 
     /*
-    * Process data in client side to avoid the server
-    * to explode with a lot of queries running
-    */
-    for(var c of json.cases) {
-      if(!(c.state_name in casesByState)) { // New object
+     * Process data in client side to avoid the server
+     * to explode with a lot of queries running
+     */
+    for (var c of json.cases) {
+      if (!(c.state_name in casesByState)) {
+        // New object
         casesByState[c.state_name] = {
-          'confirmed': 0,
-          'suspected': 0,
-          'healed': 0,
-          'latitude': c.state_latitude,
-          'longitude': c.state_longitude
-        };
+          confirmed: 0,
+          suspected: 0,
+          healed: 0,
+          latitude: c.state_latitude,
+          longitude: c.state_longitude
+        }
       }
 
-      switch(c.status) {
-        case 'confirmed': casesByState[c.state_name].confirmed++; break;
-        case 'suspected': casesByState[c.state_name].suspected++; break;
-        case 'healed': casesByState[c.state_name].healed++; break;
+      switch (c.status) {
+        case 'confirmed':
+          casesByState[c.state_name].confirmed++
+          break
+        case 'suspected':
+          casesByState[c.state_name].suspected++
+          break
+        case 'healed':
+          casesByState[c.state_name].healed++
+          break
       }
     }
 
     // Fill casesByAge object
-    casesByAge.confirmed = json.confirmed_by_age;
+    casesByAge.confirmed = json.confirmed_by_age
     casesByAge.healed = json.healed_by_age
     casesByAge.suspected = json.suspected_by_age
 
+    // Fill casesByDate array
+    casesByDate = json.cases_by_date
+
     // Load charts and map
-    loadStatesChart();
-    loadAgesChart();
-    drawClusters();
-  });
+    loadStatesChart()
+    loadAgesChart()
+    drawClusters()
+    loadTrendsChart()
+  })
 
 /**
  * Chart - CASOS POR ESTADO
  */
-function loadStatesChart() {
+function loadStatesChart () {
   var options = {
     theme: {
       mode: 'dark',
@@ -63,16 +79,16 @@ function loadStatesChart() {
     colors: ['#FF4560', '#FFCD01'],
     series: [
       {
-        name: "Confirmados",
+        name: 'Confirmados',
         data: Object.values(casesByState).map(d => d.confirmed)
       },
       {
-        name: "Sospechosos",
+        name: 'Sospechosos',
         data: Object.values(casesByState).map(d => d.suspected)
-      },
+      }
     ],
     chart: {
-      type: "bar",
+      type: 'bar',
       background: '#00232A',
       width: '100%',
       stacked: true,
@@ -87,51 +103,53 @@ function loadStatesChart() {
     },
     stroke: {
       width: 1,
-      colors: ["#00313B"]
+      colors: ['#00313B']
     },
     xaxis: {
       categories: Object.keys(casesByState)
     },
     legend: {
-      position: "bottom",
-      horizontalAlign: "left",
+      position: 'bottom',
+      horizontalAlign: 'left',
       offsetX: 40
     },
-    responsive: [{
-      breakpoint: 540,
-      options: {
-        chart: {
-          height: 700
+    responsive: [
+      {
+        breakpoint: 540,
+        options: {
+          chart: {
+            height: 700
+          }
         }
       }
-    }],
-  };
+    ]
+  }
 
-  var chart = new ApexCharts(document.querySelector('#chart'), options);
-  chart.render();
+  var chart = new ApexCharts(document.querySelector('#chart'), options)
+  chart.render()
 }
 
 /**
  * Chart - TOTAL DEL PAIS
  */
-function loadDonutChart(data) {
+function loadDonutChart (data) {
   var donutOptions = {
     series: data,
     theme: {
       mode: 'dark'
     },
     chart: {
-      type: "donut",
+      type: 'donut',
       background: '#00232A',
-      width: '100%',
+      width: '100%'
     },
     colors: ['#FF4560', '#FFCD01', '#00E396'],
-    labels: ["Confirmados", "Sospechosos", "Recuperados"],
+    labels: ['Confirmados', 'Sospechosos', 'Recuperados'],
     legend: {
       fontSize: '16px',
       position: 'bottom',
       horizontalAlign: 'center',
-      floating: false,
+      floating: false
     },
     responsive: [
       {
@@ -143,20 +161,23 @@ function loadDonutChart(data) {
         }
       }
     ]
-  };
+  }
 
-  var chart2 = new ApexCharts(document.querySelector('#donut-chart'), donutOptions);
-  chart2.render();
+  var chart2 = new ApexCharts(
+    document.querySelector('#donut-chart'),
+    donutOptions
+  )
+  chart2.render()
 }
 
 /**
  * Draw countries and boundaries using GeoJSON
  */
-function addGeoJsonLayer(file, color, selectable = false) {
+function addGeoJsonLayer (file, color, selectable = false) {
   var geojsonSource = new ol.source.Vector({
     url: file,
     format: new ol.format.GeoJSON()
-  });
+  })
 
   var geojsonLayer = new ol.layer.Vector({
     title: 'Boundaries',
@@ -170,68 +191,68 @@ function addGeoJsonLayer(file, color, selectable = false) {
         color: color
       })
     })
-  });
+  })
 
-  geojsonLayer.set('selectable', selectable);
-  map.addLayer(geojsonLayer);
+  geojsonLayer.set('selectable', selectable)
+  map.addLayer(geojsonLayer)
 }
 
 /**
  * Load OpenLayers map instance
  */
-function loadMap() {
+function loadMap () {
   map = new ol.Map({
     target: 'map',
     view: new ol.View({
-      center: ol.proj.fromLonLat([-102.341600, 23.568975]),
+      center: ol.proj.fromLonLat([-102.3416, 23.568975]),
       enableRotation: false,
       minZoom: 3.5,
-      zoom: 4.8,
+      zoom: 4.8
     })
-  });
+  })
 
   // Add boundaries layer
-  addGeoJsonLayer('/static/tracker/america.geojson', '#26444A');
-  addGeoJsonLayer('/static/tracker/mexstates.geojson', '#366E8C');
+  addGeoJsonLayer('/static/tracker/america.geojson', '#26444A')
+  addGeoJsonLayer('/static/tracker/mexstates.geojson', '#366E8C')
 
   // Button listener to center map
-  document.getElementById('center-button').onclick = function() {
+  document.getElementById('center-button').onclick = function () {
     map.getView().animate({
-      center: ol.proj.fromLonLat([-102.341600, 23.568975]),
+      center: ol.proj.fromLonLat([-102.3416, 23.568975]),
       duration: 1500,
       zoom: 4.8
-    });
+    })
   }
 }
 
 /**
-* Draw a circle in each zone proportional to number of people infected
-**/
-function drawClusters() {
-  var features = [];
+ * Draw a circle in each zone proportional to number of people infected
+ **/
+function drawClusters () {
+  var features = []
 
-  for(var state of Object.values(casesByState)) {
-    for(var i = 0; i < state.confirmed; i++) {
-      var point = new ol.proj.fromLonLat([state.longitude, state.latitude]);
-      features.push(new ol.Feature(new ol.geom.Point(point)));
+  for (var state of Object.values(casesByState)) {
+    for (var i = 0; i < state.confirmed; i++) {
+      var point = new ol.proj.fromLonLat([state.longitude, state.latitude])
+      features.push(new ol.Feature(new ol.geom.Point(point)))
     }
   }
 
   var source = new ol.source.Vector({
     features: features
-  });
+  })
 
   var clusterSource = new ol.source.Cluster({
     distance: 20,
     source: source
-  });
+  })
 
-  var styleCache = {};
+  var styleCache = {}
   var clusters = new ol.layer.Vector({
     source: clusterSource,
-    style: function(feature) {
-      var size = feature.get('features').length;
-      var style = styleCache[size];
+    style: function (feature) {
+      var size = feature.get('features').length
+      var style = styleCache[size]
       if (!style) {
         style = new ol.style.Style({
           image: new ol.style.Circle({
@@ -247,18 +268,18 @@ function drawClusters() {
               color: '#fff'
             })
           })
-        });
-        styleCache[size] = style;
+        })
+        styleCache[size] = style
       }
-      return style;
+      return style
     }
-  });
+  })
 
-  map.addLayer(clusters);
+  map.addLayer(clusters)
 }
 
-function loadAgesChart() {
-  console.log(casesByAge);
+function loadAgesChart () {
+  console.log(casesByAge)
 
   var options = {
     theme: {
@@ -316,10 +337,82 @@ function loadAgesChart() {
     fill: {
       opacity: 1
     }
-  };
+  }
 
-  var chart = new ApexCharts(document.querySelector('#by-age-chart'), options);
-  chart.render();
+  var chart = new ApexCharts(document.querySelector('#by-age-chart'), options)
+  chart.render()
 }
 
-loadMap();
+/**
+ * Chart - CASOS POR DIA
+ */
+function loadTrendsChart () {
+  var options = {
+    theme: {
+      mode: 'dark',
+      palette: 'pallete1'
+    },
+    colors: ['#FF4560', '#FFCD01', '#00E396'],
+    series: [
+      {
+        name: 'Confirmados',
+        data: casesByDate.map(el => el.cases_confirmed)
+      },
+      {
+        name: 'Sospechosos',
+        data: casesByDate.map(el => el.cases_suspected)
+      },
+      {
+        name: 'Recuperados',
+        data: casesByDate.map(el => el.cases_healed)
+      }
+    ],
+    chart: {
+      height: 350,
+      background: '#00232A',
+      type: 'line',
+      zoom: {
+        enabled: false
+      }
+    },
+    stroke: {
+      show: true,
+      width: 2,
+      colors: ['transparent']
+    },
+    dataLabels: {
+      enabled: true
+    },
+    grid: {
+      row: {
+        opacity: 0.5
+      }
+    },
+    legend: {
+      position: 'bottom',
+      horizontalAlign: 'left',
+      offsetX: 40
+    },
+    fill: {
+      opacity: 1
+    },
+    xaxis: {
+      categories: casesByDate.map(el =>
+        new Date(el.date).toLocaleDateString('es-MX', {
+          weekday: 'short',
+          year: 'numeric',
+          month: 'numeric',
+          day: 'numeric'
+        })
+      ),
+      title: {
+        text: 'Fechas (19/Feb/2020 - Hoy)'
+      }
+    }
+  }
+
+  var chart = new ApexCharts(document.querySelector('#by-day-chart'), options)
+  chart.render()
+}
+
+loadMap()

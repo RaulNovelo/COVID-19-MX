@@ -5,17 +5,15 @@ import pandas as pd
 import glob
 import json
 import os
+import re
 import warnings
-from tracker.models import State
-from tracker.models import ConfirmedCase
-from tracker.models import SuspectedCase
 from datetime import datetime
 from bs4 import BeautifulSoup
+
 
 def downloadPDF(url, filename):
     """
     Download file from given {url} and store file in disk
-
     Arguments:
         url -- File to download
         filename -- Name of the file to store in disk without .pdf extension
@@ -25,7 +23,7 @@ def downloadPDF(url, filename):
     success = r.status_code == requests.codes.ok
 
     if success:
-        with open(f'tracker/files/{filename}.pdf', 'wb') as f:
+        with open(f'api_covid19/files/{filename}.pdf', 'wb') as f:
             f.write(r.content)
     else:
         warnings.warn(f"********", FutureWarning)
@@ -33,40 +31,39 @@ def downloadPDF(url, filename):
 
     return success
 
+
 def getPagesNumber(filename):
     """
     Read PDF file and return number of pages
-
     Arguments:
         filename -- PDF to read without .pdf extension
-
     Return:
         Number of PDF pages
     """
-    file = open(f'tracker/files/{filename}.pdf', 'rb')
+    file = open(f'api_covid19/files/{filename}.pdf', 'rb')
     file_reader = PyPDF2.PdfFileReader(file)
 
-    return file_reader.numPages;
+    return file_reader.numPages
 
-def parsePDF(filename):
+
+def generateCSV(filename):
     """
-    Read PDF file and then create a CSV equivalent
-
+    Read PDF files and then create a CSV equivalent.
     Arguments:
         filename -- PDF to read without .pdf extension
     """
-    print(f'Parsing file... {filename}')
-
     # Get path and number of pages
     n_pages = getPagesNumber(filename)
-    file_path = f'tracker/files/{filename}.pdf'
+    file_path = f'api_covid19/files/{filename}.pdf'
 
     # Convert PDF to CSV
     tables = camelot.read_pdf(file_path, pages=f'1-{n_pages}', split_text=True)
-    tables.export(f'tracker/files/{filename}.csv', f='csv', compress=False)
+    tables.export(
+        f'api_covid19/files/intermediate_{filename}.csv', f='csv', compress=False)
 
     # Merge generated CSV files into just one
-    all_filenames = [i for i in sorted(glob.glob(f'tracker/files/{filename}*.csv'))]
+    all_filenames = [i for i in sorted(
+        glob.glob(f'api_covid19/files/intermediate_{filename}*.csv'))]
     combined_csv = pd.read_csv(all_filenames[0])
 
     for idx, f in enumerate(all_filenames):
@@ -75,70 +72,17 @@ def parsePDF(filename):
             df.columns = combined_csv.columns
             combined_csv = combined_csv.append(df)
 
-    combined_csv.to_csv(f'tracker/files/final_{filename}.csv', index=False, encoding='utf-8-sig')
+    combined_csv.to_csv(
+        f'api_covid19/files/{filename}.csv', index=False, encoding='utf-8-sig')
 
-def csvToDatabase(filename):
-    """
-    Read CSV file and store values in Sqlite Database
-    Arguments:
-        filename -- PDF to read without .pdf extension
-    """
-    df = pd.read_csv(f'tracker/files/final_{filename}.csv')
-    api_keys = {}
+    # Finally remove intermediate CSV files
+    for f in all_filenames:
+        os.remove(f)
 
-    if os.path.exists('tracker/api_keys.json'):
-        with open('tracker/api_keys.json') as json_file:
-            api_keys = json.load(json_file)
-    else:
-        warnings.warn("You must create a jsonfile containing 'opencagedata' with your API KEY", FutureWarning)
-        warnings.warn("Otherwise all States in DB will have 0,0 in coordinates", FutureWarning)
-
-    for idx, row in df.iterrows():
-        state_name = row[1].replace('*', '')
-        state = State()
-
-        print(f'Id: {row[0]}')
-
-        # Get State from DB. If not possible then create a new register
-        try:
-            state = State.objects.filter(name=state_name)[0]
-        except:
-            api_key = api_keys['opencagedata']
-            url = f'https://api.opencagedata.com/geocode/v1/json?q={state_name},MX&key={api_key}&no_annotations=1'
-            r = requests.get(url)
-            geo_result = r.json()
-            geo_result = geo_result['results'][0]['geometry']
-            print(geo_result)
-            state = State(name=state_name, latitude=geo_result['lat'], longitude=geo_result['lng'])
-            state.save()
-
-        try:
-            if filename == 'suspected_cases':
-                case = SuspectedCase(id=row[0],
-                                     state_id=state,
-                                     sex=(1 if row[3] == 'M' else 2),
-                                     age=row[4],
-                                     symptoms_date= datetime.strptime(row[5], '%d/%m/%Y').date(),
-                                     origin_country=row[7],
-                                    )
-                case.save()
-            else:
-                case = ConfirmedCase(id=row[0],
-                                     state_id=state,
-                                     sex=(1 if row[2] == 'M' else 2),
-                                     age=row[3],
-                                     symptoms_date= datetime.strptime(row[4], '%d/%m/%Y').date(),
-                                     origin_country=row[6],
-                                     healed=('*' in row[1]) # '*' indicates a healed case
-                                    )
-                case.save()
-        except:
-            pass
 
 def getPDFLinks():
     """
     Scrap https://www.gob.mx/ website to get last links of the thecnical documents.
-
     Return:
         Dictionary with PDF links of confirmed and positives cases
     """
@@ -157,16 +101,22 @@ def getPDFLinks():
 
     return links
 
+
 def run():
     pdf_links = getPDFLinks()
+    # Extract date from document URL
+    report_date = re.findall('[0-9]*\.[0-9]*\.[0-9]*',
+                             pdf_links['confirmed_cases'])[0]
 
-    downloadPDF(url=pdf_links['confirmed_cases'],
-                filename='confirmed_cases')
-    parsePDF('confirmed_cases')
-    csvToDatabase('confirmed_cases')
+    # Documents filenames
+    cc_filename = f'{report_date}_confirmed_cases'  # Confirmed cases filename
+    sc_filename = f'{report_date}_suspected_cases'  # Suspected cases filename
 
-    downloadPDF(url=pdf_links['suspected_cases'],
-                filename='suspected_cases')
-    parsePDF('suspected_cases')
-    csvToDatabase('suspected_cases')
+    # Download PDFs
+    downloadPDF(url=pdf_links['confirmed_cases'], filename=cc_filename)
+    downloadPDF(url=pdf_links['suspected_cases'], filename=sc_filename)
 
+    generateCSV(cc_filename)
+    generateCSV(sc_filename)
+
+run()

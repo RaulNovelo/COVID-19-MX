@@ -1,4 +1,4 @@
-"""djangoscrapy URL Configuration
+"""covid19_mx URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/3.0/topics/http/urls/
@@ -14,20 +14,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from main import views
-from django.conf.urls.static import static
-from django.conf import settings
-
-from django.conf.urls import include, url
-from rest_framework import routers
-from main.views import *
-
-# Routers provide an easy way of automatically determining the URL conf.
-router = routers.DefaultRouter()
-# router.register(r"reports", ReportViewSet)
+from django.urls import include, path
 
 urlpatterns = [
-    path('', admin.site.urls),
-    url(r"^api/", include(router.urls)),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path('admin/', admin.site.urls),
+    path('covid19mx/', include('main.urls')),
+]

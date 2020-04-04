@@ -1,12 +1,6 @@
 from django.contrib import admin
+from .models import State
+from .models import ConfirmedCase
 
-# Register your models here.
-from .models import *
-
-# Register your models here.
-# @admin.register(Report)
-# class AdminReport(admin.ModelAdmin):
-#     list_display = ('id','label', 'country', 'created_at', 'source')
-#     list_filter = ()
-
-
+admin.site.register(State)
+admin.site.register(ConfirmedCase)

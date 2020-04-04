@@ -1,14 +1,32 @@
 from django.db import models
-from uuid import uuid4
-from django.contrib.auth.models import User
-from datetime import datetime
 
-# Create your models here.
-# class Report(models.Model):
-#     label = models.CharField(default="", blank=True, null=True, max_length=100)
-#     country = models.CharField(default="", blank=True, null=True, max_length=20)
-#     source = models.URLField(default="", blank=True, null=True, max_length=200)
-#     data = JSONField(default=None, null=True, blank=True)
-#     created_at = models.DateTimeField(default=datetime.now, blank=True, null=True)
+class State(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    latitude = models.FloatField()
+    longitude = models.FloatField()
 
+    class Meta:
+        unique_together = ['name']
 
+    def __str__(self):
+        return self.name + ' | ' + str(self.latitude) + ' | ' + str(self.longitude)
+
+class ConfirmedCase(models.Model):
+    state_id = models.ForeignKey(State, on_delete=models.CASCADE)
+    sex = models.SmallIntegerField() # https://en.wikipedia.org/wiki/ISO/IEC_5218
+    age = models.SmallIntegerField()
+    symptoms_date = models.DateField()
+    origin_country = models.CharField(max_length=30)
+    healed = models.BooleanField()
+
+class SuspectedCase(models.Model):
+    """
+    Hey! :P This model is super similar to ConfirmedCase. They could be mixed adding
+    a column called Suspected but I decided to have two models to have
+    consistency with goverment data.
+    """
+    state_id = models.ForeignKey(State, on_delete=models.CASCADE)
+    sex = models.SmallIntegerField()
+    age = models.SmallIntegerField()
+    symptoms_date = models.DateField()
+    origin_country = models.CharField(max_length=30)

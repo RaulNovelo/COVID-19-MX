@@ -1,29 +1,43 @@
-# Django Celery, REST Framework & SocketIO template
+# COVID-19-MX 🦠 📈
 
-API Gateway del proyecto encargado de distrubuir la información recopilada/generada a los diferentes servicios y microservicios.
+Dashboard to show the last Coronavirus data in _México_. This repository contains the process of data mining from official sources, cleaning the data and store it in a Relational Database to finally show it in a human-readable way.
 
-## Especificaciones: técnicas
+![](https://overflow.ai/static/tracker/images/coronavirus_dashboard_mexico.png)
 
-Las siguientes tecnolgias son implementadas en este proyecto:
+## Requirements
 
-- Integración de API's RESTful con Django REST Framework
-- Integración Websockets con Python-SocketIO
-- Tareas periodicas con Celery
+This project is built with Django 3.0 and uses the following libraries:
 
-La carpeta `apigateway` representa la configuración pricipal del proyecto donde se encuentra los siguientes archivos:
-- En `settings.py` configuración principal y variables del proyecto.
-- En `celery_app.py` configuración de celery para integrarse con Django.
-- En `socket_app.py` eventos que se escuchan en el socket asi como los diferentes canales.
-- Finalmente, `wsgi.py` configurado para ejecutar SocketIO con Django.
+- `beautifulsoup4`: Library for extract PDF links from Government website.
+- `camelot-py`: **Super** powerful tool to parse PDF to CSV.
+- `pandas`: Auxilary library to handle CSV in an easy way.
+- `requests`: Library to make HTTP requests.
 
-El proyecto consta de una app principal llamada `main` y que lleva el mismo nombre la carpeta.
-Dentro de main podemos encontrar multiples archivos como una app de Django, los cuales serán mencionados brevemente los más importantes:
+All the libraries are found in the `requirements.txt` file and can be install using the command `pip install -r requirements.txt`. It's recommended to use a Virtual Environment when installing new libraries.
 
-- En `models.py` se encuentran los modelos de base de datos que emplea el proyecto.
-- En `serializers.py` se encuentran los serializadores de los modelos.
-- En `tasks.py` se encuentran las tareas que Celery debe ejecutar en demanda o de manera periodica.
-- En `utils.py` se encuentran utilerias y funciones que pueden reciclarse en el proyecto
-- Finalmente, en `views.py` se encuentran las rutas que nuestro proyecto mapea ya sea como vistas o API's REST.
+## Data source
+
+Data extracted from [Mexican Government Daily Technical Report](https://www.gob.mx/salud/documentos/nuevo-coronavirus-2019-ncov-comunicado-tecnico-diario?idiom=es).
+
+##### Data processing
+
+All the data mining is found in the file
+`scripts/fetch_data.py`. It contains all the functions to web scrap, download, parse and store in Sqlite3.
+
+It can be run using Django Extensions:
+
+```
+python3 manage.py runscript fetch_data -v2
+```
+
+## Frontend
+
+The frontend relies in lightweight and open sources libraries:
+
+- [Openlayers](https://github.com/openlayers/openlayers): Library to manage all related with the map. Rendering, clustering, gestures, etc.
+- [Fluidable](https://fluidable.com/): Simple and lightweight grid system. Bootstrap is simply too much for this project.
+- [Apexcharts.js](https://github.com/apexcharts/apexcharts.js): Amazing charts thanks to them.
+
 
 ## Configuración
 

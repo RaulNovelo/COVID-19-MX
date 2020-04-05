@@ -179,10 +179,10 @@ def generate():
     downloadPDF(url=pdf_links['confirmed_cases'], filename=cc_filename)
     downloadPDF(url=pdf_links['suspected_cases'], filename=sc_filename)
 
-    generateCSV(cc_filename)
-    generateCSV(sc_filename)
+    # generateCSV(cc_filename)
+    # generateCSV(sc_filename)
 
-    csvToDatabase(cc_filename)
-    csvToDatabase(sc_filename)
+    # csvToDatabase(cc_filename)
+    # csvToDatabase(sc_filename)
 
 

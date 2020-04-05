@@ -5,7 +5,7 @@ from django.db.models import Count
 from .models import ConfirmedCase
 from .models import SuspectedCase
 from django.views.decorators.csrf import csrf_protect
-from dateutil.rrule import rrule, DAILY
+from dateutil.rrule import rrule, WEEKLY, DAILY
 import datetime
 import json
 
@@ -66,18 +66,37 @@ def api(request):
             age__gte=i, age__lt=i + age_step).count()
 
     # https://github.com/jesusmartinoza/COVID-19-MX/issues/4
+    weeks = list(rrule(WEEKLY, dtstart=datetime.date(2020, 2, 19), until=datetime.datetime.now()))
     cases_by_date = list()
-    for dt in rrule(DAILY, dtstart=datetime.date(2020, 2, 19), until=datetime.datetime.now()):
-        cc_trends = ConfirmedCase.objects.filter(symptoms_date=dt).count()
-        hc_trends = ConfirmedCase.objects.filter(
-            symptoms_date=dt, healed=True).count(),
-        sc_trends = SuspectedCase.objects.filter(symptoms_date=dt).count()
+    for i in range(1, len(weeks)):
+        cc_trends, sc_trends, hc_trends = 0, 0, 0
+        date = None
+        for dt in rrule(DAILY, dtstart=weeks[i - 1], until=weeks[i]):
+            date = dt
+            cc_trends += ConfirmedCase.objects.filter(symptoms_date=dt).count()
+            hc_trends = ConfirmedCase.objects.filter(
+                symptoms_date=dt, healed=True).count(),
+            sc_trends += SuspectedCase.objects.filter(symptoms_date=dt).count()
+        
         cases_by_date.append({
-            'date': dt,
+            'date': date,
             'cases_confirmed': cc_trends,
             'cases_healed': hc_trends,
             'cases_suspected': sc_trends
         })
+        
+    cc_trends, sc_trends, hc_trends = 0, 0, 0
+    for dt in rrule(DAILY, dtstart=weeks[-1], until=datetime.datetime.now()):
+        date = dt
+        cc_trends += ConfirmedCase.objects.filter(symptoms_date=dt).count()
+        sc_trends += SuspectedCase.objects.filter(symptoms_date=dt).count()
+            
+    cases_by_date.append({
+        'date': date,
+        'cases_confirmed': cc_trends,
+        'cases_healed': hc_trends,
+        'cases_suspected': sc_trends
+    })
 
     context = {
         'total_confirmed': ConfirmedCase.objects.filter(healed=False).count(),

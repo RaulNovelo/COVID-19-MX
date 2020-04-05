@@ -2,7 +2,9 @@ from django.contrib import admin
 from .models import State
 from .models import ConfirmedCase, SuspectedCase
 
-admin.site.register(State)
+@admin.register(State)
+class AdminState(admin.ModelAdmin):
+    list_display = ('name','latitude', 'longitude')
 @admin.register(ConfirmedCase)
 class AdminConfirmedCase(admin.ModelAdmin):
     list_display = ('id', 'state_id', 'sex', 'age', 'symptoms_date', 'origin_country', 'healed')

@@ -377,8 +377,7 @@ function loadTrendsChart () {
     },
     stroke: {
       show: true,
-      width: 2,
-      colors: ['transparent']
+      width: 2
     },
     dataLabels: {
       enabled: true

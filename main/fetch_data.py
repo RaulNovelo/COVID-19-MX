@@ -110,7 +110,7 @@ def csvToDatabase(filename):
         filename -- PDF to read without .pdf extension
     """
     df = pd.read_csv(f'main/files/{filename}.csv')
-    api_key = os.environ.get('APIKEY', None)
+    api_key = os.environ.get('GEOAPIKEY', None)
 
     if api_key is None:
         warnings.warn(

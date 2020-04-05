@@ -176,17 +176,17 @@ def generate():
                              pdf_links['confirmed_cases'])[0]
 
     # Documents filenames
-    cc_filename = f'{report_date}_confirmed_cases'  # Confirmed cases filename
-    sc_filename = f'{report_date}_suspected_cases'  # Suspected cases filename
+    cc_filename = f'confirmed_cases'  # Confirmed cases filename
+    sc_filename = f'suspected_cases'  # Suspected cases filename
 
-    # # Download PDFs
-    # downloadPDF(url=pdf_links['confirmed_cases'], filename=cc_filename)
-    # downloadPDF(url=pdf_links['suspected_cases'], filename=sc_filename)
+    # Download PDFs
+    downloadPDF(url=pdf_links['confirmed_cases'], filename=cc_filename)
+    downloadPDF(url=pdf_links['suspected_cases'], filename=sc_filename)
 
-    # generateCSV(cc_filename)
-    # generateCSV(sc_filename)
+    generateCSV(cc_filename)
+    generateCSV(sc_filename)
 
-    # csvToDatabase(cc_filename)
+    csvToDatabase(cc_filename)
     csvToDatabase(sc_filename, suspected=True)
 
 

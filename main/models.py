@@ -15,7 +15,7 @@ class ConfirmedCase(models.Model):
     state_id = models.ForeignKey(State, on_delete=models.CASCADE)
     sex = models.SmallIntegerField() # https://en.wikipedia.org/wiki/ISO/IEC_5218
     age = models.SmallIntegerField()
-    symptoms_date = models.DateField()
+    symptoms_date = models.DateField(blank=True, null=True)
     origin_country = models.CharField(max_length=30)
     healed = models.BooleanField()
 
@@ -28,5 +28,5 @@ class SuspectedCase(models.Model):
     state_id = models.ForeignKey(State, on_delete=models.CASCADE)
     sex = models.SmallIntegerField()
     age = models.SmallIntegerField()
-    symptoms_date = models.DateField()
+    symptoms_date = models.DateField(blank=True, null=True)
     origin_country = models.CharField(max_length=30)

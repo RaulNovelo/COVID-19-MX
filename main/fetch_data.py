@@ -103,7 +103,7 @@ def getPDFLinks():
     return links
 
 
-def csvToDatabase(filename):
+def csvToDatabase(filename, suspected=False):
     """
     Read CSV file and store values in Sqlite Database
     Arguments:
@@ -111,6 +111,7 @@ def csvToDatabase(filename):
     """
     df = pd.read_csv(f'main/files/{filename}.csv')
     api_key = os.environ.get('GEOAPIKEY', None)
+    print(filename)
 
     if api_key is None:
         warnings.warn(
@@ -121,8 +122,11 @@ def csvToDatabase(filename):
     for idx, row in df.iterrows():
         state_name = row[1].replace('*', '')
         state = State()
-
-        print(f'Id: {row[0]}')
+        date = None
+        try:
+            date = datetime.strptime(row[4], '%d/%m/%Y').date()
+        except:
+            pass
 
         # Get State from DB. If not possible then create a new register
         try:
@@ -138,30 +142,30 @@ def csvToDatabase(filename):
             state.save()
 
         try:
-            if filename == 'suspected_cases':
+            if suspected:
                 case = SuspectedCase(id=row[0],
                                      state_id=state,
-                                     sex=(1 if row[3] == 'M' else 2),
-                                     age=row[4],
-                                     symptoms_date=datetime.strptime(
-                                         row[5], '%d/%m/%Y').date(),
-                                     origin_country=row[7],
+                                     sex=(1 if row[2] == 'M' else 2),
+                                     age=row[3],
+                                     symptoms_date=date,
+                                     origin_country=row[6],
                                      )
                 case.save()
+                print('suspected: ', case)
             else:
                 case = ConfirmedCase(id=row[0],
                                      state_id=state,
                                      sex=(1 if row[2] == 'M' else 2),
                                      age=row[3],
-                                     symptoms_date=datetime.strptime(
-                                         row[4], '%d/%m/%Y').date(),
+                                     symptoms_date=date,
                                      origin_country=row[6],
                                      # '*' indicates a healed case
                                      healed=('*' in row[1])
                                      )
+                print('confirmed: ', case)
                 case.save()
-        except:
-            pass
+        except Exception as err:
+            print(err)
 
 
 def generate():
@@ -175,14 +179,14 @@ def generate():
     cc_filename = f'{report_date}_confirmed_cases'  # Confirmed cases filename
     sc_filename = f'{report_date}_suspected_cases'  # Suspected cases filename
 
-    # Download PDFs
-    downloadPDF(url=pdf_links['confirmed_cases'], filename=cc_filename)
-    downloadPDF(url=pdf_links['suspected_cases'], filename=sc_filename)
+    # # Download PDFs
+    # downloadPDF(url=pdf_links['confirmed_cases'], filename=cc_filename)
+    # downloadPDF(url=pdf_links['suspected_cases'], filename=sc_filename)
 
     # generateCSV(cc_filename)
     # generateCSV(sc_filename)
 
     # csvToDatabase(cc_filename)
-    # csvToDatabase(sc_filename)
+    csvToDatabase(sc_filename, suspected=True)
 
 

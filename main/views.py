@@ -2,8 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.db.models import Count
-from .models import ConfirmedCase
-from .models import SuspectedCase
+from .models import State, Country
+from .models import ConfirmedCase, SuspectedCase, DailyReport
 from django.views.decorators.csrf import csrf_protect
 from dateutil.rrule import rrule, WEEKLY, DAILY
 import datetime
@@ -11,9 +11,10 @@ import json
 
 
 def index(request):
+    country = Country.objects.get(name='Mexico')
     context = {
         'total_confirmed': ConfirmedCase.objects.filter(healed=False).count(),
-        'total_healed': ConfirmedCase.objects.filter(healed=True).count(),
+        'total_healed': DailyReport.objects.get(country=country).recovered,
         'total_suspected': SuspectedCase.objects.all().count()
     }
 
@@ -97,10 +98,10 @@ def api(request):
         'cases_healed': hc_trends,
         'cases_suspected': sc_trends
     })
-
+    country = Country.objects.get(name='Mexico')
     context = {
         'total_confirmed': ConfirmedCase.objects.filter(healed=False).count(),
-        'total_healed': ConfirmedCase.objects.filter(healed=True).count(),
+        'total_healed': DailyReport.objects.get(country=country).recovered,
         'total_suspected': SuspectedCase.objects.all().count(),
         'cases': sorted(cases, key=lambda c: c['state_name']),
         'confirmed_by_age': confirmed_by_age,

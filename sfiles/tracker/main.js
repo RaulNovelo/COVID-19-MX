@@ -286,7 +286,7 @@ function loadAgesChart () {
       mode: 'dark',
       palette: 'palette1'
     },
-    colors: ['#FF4560', '#FFCD01', '#00E396'],
+    colors: ['#FF4560', '#FFCD01'],
     series: [
       {
         name: 'Confirmados',
@@ -295,10 +295,6 @@ function loadAgesChart () {
       {
         name: 'Sospechosos',
         data: Object.values(casesByAge.suspected)
-      },
-      {
-        name: 'Recuperados',
-        data: Object.values(casesByAge.healed)
       }
     ],
     chart: {
@@ -352,7 +348,7 @@ function loadTrendsChart () {
       mode: 'dark',
       palette: 'pallete1'
     },
-    colors: ['#FF4560', '#FFCD01', '#00E396'],
+    colors: ['#FF4560', '#FFCD01'],
     series: [
       {
         name: 'Confirmados',
@@ -361,10 +357,6 @@ function loadTrendsChart () {
       {
         name: 'Sospechosos',
         data: casesByDate.map(el => el.cases_suspected)
-      },
-      {
-        name: 'Recuperados',
-        data: casesByDate.map(el => el.cases_healed)
       }
     ],
     chart: {

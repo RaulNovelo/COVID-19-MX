@@ -29,6 +29,5 @@ class AdminSuspectedCase(admin.ModelAdmin, ExportCsvMixin):
 class AdminDailyReport(admin.ModelAdmin, ExportCsvMixin):
     list_display = ('country', 'date', 'confirmed', 'deaths', 'recovered')
     list_filter = ('date',)
-    search_fields = ('country', 'date', 'confirmed', 'deaths', 'recovered')
     ordering = ('country',)
     actions = ('export_as_csv',)

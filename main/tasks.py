@@ -29,7 +29,7 @@ import os
         
 
 # crontab(minute=0, hour='*/6')
-@periodic_task(run_every=(crontab()), name="update_info: GET https://pomber.github.io/covid19/timeseries.json every 12 hrs")
+@periodic_task(run_every=(crontab(minute=0, hour='*/2')), name="update_reports: GET https://pomber.github.io/covid19/timeseries.json every 12 hrs")
 def update_reports():
     url = "https://pomber.github.io/covid19/timeseries.json"
     r = requests.get(url)
